@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="ProjectModuleManager">
-    <modules>
-      <module fileurl="file://$PROJECT_DIR$/cloudora.iml" filepath="$PROJECT_DIR$/cloudora.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/cloudora_android.iml" filepath="$PROJECT_DIR$/android/cloudora_android.iml" />
-    </modules>
-  </component>
-</project>
