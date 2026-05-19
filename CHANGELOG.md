@@ -13,6 +13,3 @@
 - 手动关水自动检测，UI 即时更新
 - Token 持久化，退出后自动登录
 - 设备列表离线缓存，二次打开秒出
-- SSL Pinning 反抓包框架
-- ProGuard + R8 代码混淆
-- GitHub Actions 自动构建 APK + AAB

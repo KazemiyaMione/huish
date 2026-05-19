@@ -1,4 +1,4 @@
-# 云水 · 慧生活798 去广告版
+# 慧生活798 去广告版
 
 [![Build Android APK](https://github.com/KazemiyaMione/cloudora/actions/workflows/build-android.yml/badge.svg)](https://github.com/KazemiyaMione/cloudora/actions/workflows/build-android.yml)
 
