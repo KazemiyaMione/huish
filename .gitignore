@@ -1,0 +1,15 @@
+# Flutter build
+build/
+.dart_tool/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local config
+.claude/settings.local.json
