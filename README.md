@@ -22,7 +22,7 @@
 
 ## 下载
 
-前往 [Releases](https://github.com/KazemiyaMione/cloudora/releases) 下载最新 APK。每次打 tag 后 GitHub Actions 自动构建并发布。
+前往 [Releases](https://github.com/KazemiyaMione/huish/releases/) 下载最新 APK。每次打 tag 后 GitHub Actions 自动构建并发布。
 
 
 ## 平台支持
