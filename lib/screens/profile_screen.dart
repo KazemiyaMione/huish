@@ -44,6 +44,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _showAddDeviceDialog(BuildContext context) async {
+    final api = context.read<AuthProvider>().api;
+    final messenger = ScaffoldMessenger.of(context);
     final ctrl = TextEditingController();
     final ok = await showDialog<bool>(
       context: context,
@@ -71,27 +73,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (ok != true || !mounted) return;
     final did = ctrl.text.trim();
     if (did.isEmpty) return;
-    final api = context.read<AuthProvider>().api;
     try {
       final resp = await api.getDeviceQr(did);
       if (!mounted) return;
       if (resp.isSuccess) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           const SnackBar(content: Text('设备添加成功'), backgroundColor: Colors.green),
         );
       } else if (resp.code == 400 || resp.code == 409) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           const SnackBar(content: Text('设备已在列表中或已绑定'), backgroundColor: Colors.orange),
         );
       } else {
         final msg = resp.data?['msg'] as String? ?? '绑定失败';
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           SnackBar(content: Text('$msg (code: ${resp.code})')),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           const SnackBar(content: Text('网络异常，请重试')),
         );
       }
