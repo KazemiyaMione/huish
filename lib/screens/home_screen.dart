@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import 'device_screen.dart';
-import 'qr_scan_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -110,32 +109,6 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('云水 · 直饮水'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.qr_code_scanner),
-            tooltip: '扫码添加设备',
-            onPressed: _loading
-                ? null
-                : () async {
-                    final added = await Navigator.of(context).push<bool>(
-                      MaterialPageRoute(builder: (_) => const QrScanScreen()),
-                    );
-                    if (added == true) _loadMaster();
-                  },
-          ),
-          PopupMenuButton<String>(
-            onSelected: (v) async {
-              if (v == 'logout') {
-                final nav = Navigator.of(context);
-                await context.read<AuthProvider>().logout();
-                nav.pushReplacementNamed('/login');
-              }
-            },
-            itemBuilder: (_) => const [
-              PopupMenuItem(value: 'logout', child: Text('退出登录')),
-            ],
-          ),
-        ],
       ),
       body: _buildBody(),
     );

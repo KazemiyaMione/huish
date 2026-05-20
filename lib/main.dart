@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
+import 'providers/settings_provider.dart';
 import 'screens/login_screen.dart';
-import 'screens/home_screen.dart';
+import 'screens/main_shell.dart';
 
 void main() {
   runApp(const CloudoraApp());
@@ -13,20 +14,30 @@ class CloudoraApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AuthProvider(),
-      child: MaterialApp(
-        title: '云水 · 直饮水',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-          useMaterial3: true,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => SettingsProvider()),
+      ],
+      child: Consumer<SettingsProvider>(
+        builder: (_, settings, _) => MaterialApp(
+          title: '云水 · 直饮水',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.light),
+            useMaterial3: true,
+          ),
+          darkTheme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.dark),
+            useMaterial3: true,
+          ),
+          themeMode: settings.themeMode,
+          home: const SplashScreen(),
+          routes: {
+            '/login': (_) => const LoginScreen(),
+            '/main': (_) => const MainShell(),
+          },
         ),
-        home: const SplashScreen(),
-        routes: {
-          '/login': (_) => const LoginScreen(),
-          '/home': (_) => const HomeScreen(),
-        },
       ),
     );
   }
@@ -50,7 +61,7 @@ class _SplashScreenState extends State<SplashScreen> {
     final auth = context.read<AuthProvider>();
     await auth.tryAutoLogin();
     if (!mounted) return;
-    final route = auth.isLoggedIn ? '/home' : '/login';
+    final route = auth.isLoggedIn ? '/main' : '/login';
     Navigator.of(context).pushReplacementNamed(route);
   }
 
