@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/settings_provider.dart';
-import 'qr_scan_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -41,6 +40,61 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (_) {}
     if (mounted) {
       setState(() => _loadingAccount = false);
+    }
+  }
+
+  Future<void> _showAddDeviceDialog(BuildContext context) async {
+    final ctrl = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('添加设备'),
+        content: TextField(
+          controller: ctrl,
+          keyboardType: TextInputType.number,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: '设备码',
+            hintText: '请输入设备码',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('绑定'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final did = ctrl.text.trim();
+    if (did.isEmpty) return;
+    final api = context.read<AuthProvider>().api;
+    try {
+      final resp = await api.getDeviceQr(did);
+      if (!mounted) return;
+      if (resp.isSuccess) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('设备添加成功'), backgroundColor: Colors.green),
+        );
+      } else if (resp.code == 400 || resp.code == 409) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('设备已在列表中或已绑定'), backgroundColor: Colors.orange),
+        );
+      } else {
+        final msg = resp.data?['msg'] as String? ?? '绑定失败';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$msg (code: ${resp.code})')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('网络异常，请重试')),
+        );
+      }
     }
   }
 
@@ -138,15 +192,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         children: [
           ListTile(
-            leading: const Icon(Icons.qr_code_scanner, color: Colors.blue),
-            title: const Text('扫码添加设备'),
-            subtitle: const Text('扫描设备二维码进行绑定'),
+            leading: const Icon(Icons.add_circle_outline, color: Colors.blue),
+            title: const Text('添加设备'),
+            subtitle: const Text('输入设备码绑定饮水机'),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () async {
-              await Navigator.of(context).push<bool>(
-                MaterialPageRoute(builder: (_) => const QrScanScreen()),
-              );
-            },
+            onTap: () => _showAddDeviceDialog(context),
           ),
           const Divider(height: 1),
           ListTile(
@@ -207,7 +257,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             Text('关于', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            _buildAboutRow(context, Icons.info_outline, '版本', '1.1.2'),
+            _buildAboutRow(context, Icons.info_outline, '版本', '1.1.3'),
             const SizedBox(height: 12),
             _buildAboutRow(context, Icons.water_drop_outlined, '应用名称', '云水 · 直饮水'),
             const SizedBox(height: 12),

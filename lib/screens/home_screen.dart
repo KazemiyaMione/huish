@@ -170,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 12),
                     const Text('暂无设备', style: TextStyle(color: Colors.grey, fontSize: 16)),
                     const SizedBox(height: 4),
-                    const Text('前往「我的」页面扫码添加', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                    const Text('前往「我的」页面输入设备码添加', style: TextStyle(color: Colors.grey, fontSize: 13)),
                     const SizedBox(height: 16),
                     OutlinedButton.icon(
                       onPressed: _loadMaster,
