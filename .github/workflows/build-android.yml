@@ -50,6 +50,11 @@ jobs:
           cp build/app/outputs/flutter-apk/app-release.apk "cloudora-v${VERSION}.apk"
           cp build/app/outputs/bundle/release/app-release.aab "cloudora-v${VERSION}.aab"
 
+      - name: Extract changelog
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d+ -f1)
+          sed -n "/^## v${VERSION}/,/^## v/p" CHANGELOG.md | sed '$d' > .release-body.md
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
@@ -71,6 +76,7 @@ jobs:
           files: |
             cloudora-v*.apk
             cloudora-v*.aab
+          body_path: .release-body.md
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
