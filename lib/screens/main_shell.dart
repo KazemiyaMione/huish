@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
-import 'qr_scan_screen.dart';
 import 'profile_screen.dart';
 
 class MainShell extends StatefulWidget {
@@ -24,7 +23,6 @@ class _MainShellState extends State<MainShell> {
         index: _index,
         children: const [
           HomeScreen(),
-          QrScanScreen(),
           ProfileScreen(),
         ],
       ),
@@ -36,11 +34,6 @@ class _MainShellState extends State<MainShell> {
             icon: Icon(Icons.water_drop_outlined),
             selectedIcon: Icon(Icons.water_drop),
             label: '首页',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.qr_code_scanner_outlined),
-            selectedIcon: Icon(Icons.qr_code_scanner),
-            label: '扫码',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),

@@ -119,7 +119,6 @@ class _HomeScreenState extends State<HomeScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final account = _masterData?['account'] as Map<String, dynamic>?;
     final favos = _masterData?['favos'] as List<dynamic>? ?? [];
 
     return RefreshIndicator(
@@ -127,7 +126,6 @@ class _HomeScreenState extends State<HomeScreen> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _buildAccountCard(account),
           if (_error != null)
             Card(
               color: Colors.orange[50],
@@ -172,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 12),
                     const Text('暂无设备', style: TextStyle(color: Colors.grey, fontSize: 16)),
                     const SizedBox(height: 4),
-                    const Text('点击右上角扫码添加', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                    const Text('前往「我的」页面扫码添加', style: TextStyle(color: Colors.grey, fontSize: 13)),
                     const SizedBox(height: 16),
                     OutlinedButton.icon(
                       onPressed: _loadMaster,
@@ -186,43 +184,6 @@ class _HomeScreenState extends State<HomeScreen> {
           else
             ...favos.map((f) => _buildDeviceCard(f as Map<String, dynamic>)),
         ],
-      ),
-    );
-  }
-
-  Widget _buildAccountCard(Map<String, dynamic>? account) {
-    if (account == null) return const SizedBox.shrink();
-    final name = account['name'] as String? ?? '';
-    final pn = account['pn'] as String? ?? '';
-    final useScore = account['useScore'] as num? ?? 0;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            const Icon(Icons.account_circle, size: 48, color: Colors.blue),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 4),
-                  Text(pn, style: const TextStyle(color: Colors.grey)),
-                ],
-              ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                const Text('积分', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                Text('$useScore',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue)),
-              ],
-            ),
-          ],
-        ),
       ),
     );
   }

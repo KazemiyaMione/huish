@@ -4,14 +4,50 @@ import '../providers/auth_provider.dart';
 import '../providers/settings_provider.dart';
 import 'qr_scan_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  Map<String, dynamic>? _accountData;
+  bool _loadingAccount = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAccount();
+  }
+
+  Future<void> _loadAccount() async {
+    final api = context.read<AuthProvider>().api;
+    final cached = await api.loadCachedMaster();
+    if (cached != null && mounted) {
+      setState(() {
+        _accountData = cached['account'] as Map<String, dynamic>?;
+        _loadingAccount = false;
+      });
+    }
+    try {
+      final resp = await api.getMaster();
+      if (resp.isSuccess && mounted) {
+        setState(() {
+          _accountData = resp.data?['account'] as Map<String, dynamic>?;
+          _loadingAccount = false;
+        });
+      }
+    } catch (_) {}
+    if (mounted) {
+      setState(() => _loadingAccount = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final settings = context.watch<SettingsProvider>();
-    final auth = context.watch<AuthProvider>();
 
     return Scaffold(
       appBar: AppBar(
@@ -21,7 +57,7 @@ class ProfileScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _buildUserCard(context, auth),
+          _buildAccountCard(context),
           const SizedBox(height: 16),
           _buildQuickActions(context),
           const SizedBox(height: 16),
@@ -33,37 +69,64 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUserCard(BuildContext context, AuthProvider auth) {
+  Widget _buildAccountCard(BuildContext context) {
     final theme = Theme.of(context);
+
+    if (_loadingAccount) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(32),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
+
+    final account = _accountData;
+    final name = account?['name'] as String? ?? '未登录';
+    final pn = account?['pn'] as String? ?? '';
+    final useScore = account?['useScore'] as num? ?? 0;
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
-        child: Row(
+        child: Column(
           children: [
-            CircleAvatar(
-              radius: 30,
-              backgroundColor: theme.colorScheme.primary,
-              child: const Icon(Icons.person, size: 32, color: Colors.white),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    auth.isLoggedIn ? '已登录' : '未登录',
-                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 30,
+                  backgroundColor: theme.colorScheme.primary,
+                  child: const Icon(Icons.person, size: 32, color: Colors.white),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      if (pn.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(pn, style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey)),
+                      ],
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    auth.api.uid ?? '用户ID',
-                    style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
-                  ),
-                ],
-              ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    const Text('积分', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                    const SizedBox(height: 2),
+                    Text(
+                      '$useScore',
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blue),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            if (auth.isLoggedIn)
-              Icon(Icons.check_circle, color: Colors.green[400], size: 24),
           ],
         ),
       ),
@@ -80,12 +143,9 @@ class ProfileScreen extends StatelessWidget {
             subtitle: const Text('扫描设备二维码进行绑定'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () async {
-              final added = await Navigator.of(context).push<bool>(
+              await Navigator.of(context).push<bool>(
                 MaterialPageRoute(builder: (_) => const QrScanScreen()),
               );
-              if (added == true && context.mounted) {
-                // Pop to main shell which will refresh home
-              }
             },
           ),
           const Divider(height: 1),
@@ -147,19 +207,17 @@ class ProfileScreen extends StatelessWidget {
           children: [
             Text('关于', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            _buildAboutRow(context, Icons.info_outline, '版本', '1.0.0'),
+            _buildAboutRow(context, Icons.info_outline, '版本', '1.1.2'),
             const SizedBox(height: 12),
             _buildAboutRow(context, Icons.water_drop_outlined, '应用名称', '云水 · 直饮水'),
             const SizedBox(height: 12),
             InkWell(
-              onTap: () {
-                // Copy repo URL to clipboard or open
-              },
+              onTap: () {},
               child: _buildAboutRow(
                 context,
                 Icons.code,
                 '源码仓库',
-                'github.com/YOUR_USERNAME/cloudora',
+                'https://github.com/KazemiyaMione/huish',
               ),
             ),
           ],
