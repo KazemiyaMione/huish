@@ -194,7 +194,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ? () async {
                 final ok = await auth.login(_phoneCtrl.text, _smsCtrl.text);
                 if (ok && mounted) {
-                  Navigator.of(context).pushReplacementNamed('/home');
+                  Navigator.of(context).pushReplacementNamed('/main');
                 }
               }
             : null,
