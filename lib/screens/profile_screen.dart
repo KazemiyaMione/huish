@@ -15,6 +15,14 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  static const _themeColors = [
+    Color(0xFF1565C0), // Blue
+    Color(0xFF00897B), // Teal
+    Color(0xFF2E7D32), // Green
+    Color(0xFF6A1B9A), // Purple
+    Color(0xFFE65100), // Orange
+    Color(0xFFC62828), // Red
+  ];
   Map<String, dynamic>? _accountData;
   Map<String, dynamic>? _scoreInfo;
   bool _loadingAccount = true;
@@ -55,13 +63,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final settings = context.watch<SettingsProvider>();
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('我的'),
-        backgroundColor: theme.colorScheme.inversePrimary,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -245,6 +251,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Card(
       child: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: Row(
+              children: [
+                const Icon(Icons.palette, size: 20, color: Colors.grey),
+                const SizedBox(width: 12),
+                const Text('主题色', style: TextStyle(fontSize: 15)),
+                const Spacer(),
+                ..._themeColors.map((c) => GestureDetector(
+                      onTap: () => settings.setSeedColor(c),
+                      child: Container(
+                        width: 28,
+                        height: 28,
+                        margin: const EdgeInsets.only(left: 10),
+                        decoration: BoxDecoration(
+                          color: c,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: settings.seedColor.toARGB32() == c.toARGB32()
+                                ? Colors.black
+                                : Colors.transparent,
+                            width: 2.5,
+                          ),
+                          boxShadow: [
+                            if (settings.seedColor.toARGB32() == c.toARGB32())
+                              BoxShadow(color: c.withAlpha(100), blurRadius: 6, spreadRadius: 1),
+                          ],
+                        ),
+                      ),
+                    )),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
           SwitchListTile(
             secondary: Icon(
               settings.isDark ? Icons.dark_mode : Icons.light_mode,

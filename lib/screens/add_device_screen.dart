@@ -152,12 +152,9 @@ class _AddDeviceScreenState extends State<AddDeviceScreen> with SingleTickerProv
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('添加设备'),
-        backgroundColor: theme.colorScheme.inversePrimary,
         bottom: _resultData == null && !_loading
             ? TabBar(
                 controller: _tabCtrl,

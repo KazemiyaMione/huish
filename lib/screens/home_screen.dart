@@ -148,7 +148,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('云水 · 直饮水'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: _buildBody(),
     );

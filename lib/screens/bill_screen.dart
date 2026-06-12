@@ -143,12 +143,9 @@ class _BillScreenState extends State<BillScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('消费记录'),
-        backgroundColor: theme.colorScheme.inversePrimary,
       ),
       body: Column(
         children: [

@@ -148,13 +148,11 @@ class _ScoreScreenState extends State<ScoreScreen> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final scoreInfo = _missionData?['accScoreRsp'] as Map<String, dynamic>?;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('积分中心'),
-        backgroundColor: theme.colorScheme.inversePrimary,
         bottom: TabBar(
           controller: _tabCtrl,
           tabs: const [

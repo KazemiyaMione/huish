@@ -92,12 +92,9 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('设备管理'),
-        backgroundColor: theme.colorScheme.inversePrimary,
         actions: [
           IconButton(
             icon: const Icon(Icons.location_on_outlined),

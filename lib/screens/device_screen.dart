@@ -247,7 +247,6 @@ class _DeviceScreenState extends State<DeviceScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(widget.deviceName),
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         ),
         body: _buildBody(),
       ),

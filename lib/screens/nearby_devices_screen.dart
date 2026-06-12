@@ -118,12 +118,9 @@ class _NearbyDevicesScreenState extends State<NearbyDevicesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('附近设备'),
-        backgroundColor: theme.colorScheme.inversePrimary,
       ),
       body: Column(
         children: [

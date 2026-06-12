@@ -4,6 +4,7 @@ import 'providers/auth_provider.dart';
 import 'providers/settings_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_shell.dart';
+import 'theme/app_theme.dart';
 
 void main() {
   runApp(const CloudoraApp());
@@ -23,14 +24,8 @@ class CloudoraApp extends StatelessWidget {
         builder: (_, settings, _) => MaterialApp(
           title: '云水 · 直饮水',
           debugShowCheckedModeBanner: false,
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.light),
-            useMaterial3: true,
-          ),
-          darkTheme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue, brightness: Brightness.dark),
-            useMaterial3: true,
-          ),
+          theme: AppTheme.light(settings.seedColor),
+          darkTheme: AppTheme.dark(settings.seedColor),
           themeMode: settings.themeMode,
           home: const SplashScreen(),
           routes: {
@@ -67,16 +62,19 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    final theme = Theme.of(context);
+    return Scaffold(
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.water_drop, size: 64, color: Colors.blue),
-            SizedBox(height: 16),
-            Text('云水', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            SizedBox(height: 24),
-            CircularProgressIndicator(),
+            Icon(Icons.water_drop, size: 64, color: theme.colorScheme.primary),
+            const SizedBox(height: 16),
+            Text('云水', style: theme.textTheme.headlineMedium),
+            const SizedBox(height: 8),
+            Text('直饮水服务', style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+            const SizedBox(height: 24),
+            CircularProgressIndicator(color: theme.colorScheme.primary),
           ],
         ),
       ),
