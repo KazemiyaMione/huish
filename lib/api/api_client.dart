@@ -220,7 +220,7 @@ class ApiClient {
 
   /// Get bill/consumption list.
   Future<ApiResponse> getBillList({int page = 1, int size = 20}) async {
-    final resp = await _get('/api/v1/bill/lst-owner?page=$page&size=$size&hasCount=true&status=0');
+    final resp = await _get('/api/v1/bill/lst-owner?page=$page&size=$size&hasCount=true');
     return ApiResponse.fromJson(jsonDecode(resp.body) as Map<String, dynamic>);
   }
 
@@ -336,7 +336,7 @@ class CaptchaResult {
 
 class ApiResponse {
   final int code;
-  final Map<String, dynamic>? data;
+  final dynamic data; // can be Map or List
   final int? time;
 
   ApiResponse({required this.code, this.data, this.time});
@@ -344,10 +344,16 @@ class ApiResponse {
   factory ApiResponse.fromJson(Map<String, dynamic> json) {
     return ApiResponse(
       code: json['code'] as int? ?? -1,
-      data: json['data'] as Map<String, dynamic>?,
+      data: json['data'],
       time: json['time'] as int?,
     );
   }
 
   bool get isSuccess => code == 0;
+
+  /// Convenience: data as Map (for Map-typed responses).
+  Map<String, dynamic>? get dataMap => data is Map<String, dynamic> ? data : null;
+
+  /// Convenience: data as List (for List-typed responses).
+  List<dynamic>? get dataList => data is List<dynamic> ? data : null;
 }

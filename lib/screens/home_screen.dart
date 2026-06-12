@@ -51,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (!mounted) return;
       if (resp.isSuccess) {
         setState(() {
-          _masterData = resp.data;
+          _masterData = resp.dataMap;
           _loading = false;
           _error = null;
         });

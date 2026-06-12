@@ -44,9 +44,9 @@ class _ScoreScreenState extends State<ScoreScreen> with SingleTickerProviderStat
       ]);
       if (!mounted) return;
       setState(() {
-        if (results[0].isSuccess) _missionData = results[0].data;
+        if (results[0].isSuccess) _missionData = results[0].dataMap;
         if (results[1].isSuccess) {
-          _scoreHistory = results[1].data as List<dynamic>?;
+          _scoreHistory = results[1].dataList;
         }
         _loading = false;
       });
@@ -101,7 +101,7 @@ class _ScoreScreenState extends State<ScoreScreen> with SingleTickerProviderStat
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(resp.data?['msg'] as String? ?? '领取失败')),
+          SnackBar(content: Text(resp.dataMap?['msg'] as String? ?? '领取失败')),
         );
       }
     } catch (e) {

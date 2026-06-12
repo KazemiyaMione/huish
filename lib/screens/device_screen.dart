@@ -74,8 +74,8 @@ class _DeviceScreenState extends State<DeviceScreen> {
         return;
       }
       setState(() {
-        _homeData = homeResp.data;
-        _statusData = statusResp.data;
+        _homeData = homeResp.dataMap;
+        _statusData = statusResp.dataMap;
         _loading = false;
       });
       _parseStatus();
@@ -96,10 +96,10 @@ class _DeviceScreenState extends State<DeviceScreen> {
       final resp = await api.getDeviceStatus(widget.deviceId);
       if (!mounted) return;
       if (resp.isSuccess) {
-        final device = resp.data?['device'] as Map<String, dynamic>?;
+        final device = resp.dataMap?['device'] as Map<String, dynamic>?;
         final gene = device?['gene'] as Map<String, dynamic>?;
         setState(() {
-          _statusData = resp.data;
+          _statusData = resp.dataMap;
           if (gene != null) {
             _currentOut = (gene['out'] as num?)?.toDouble() ?? _currentOut;
             // gene.status: 1 = dispensing, 99 = idle

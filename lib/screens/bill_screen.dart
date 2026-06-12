@@ -31,7 +31,7 @@ class _BillScreenState extends State<BillScreen> {
       if (!mounted) return;
       if (resp.isSuccess) {
         setState(() {
-          _bills = resp.data as List<dynamic>? ?? [];
+          _bills = resp.dataList ?? [];
           _loading = false;
         });
       } else {
@@ -55,7 +55,7 @@ class _BillScreenState extends State<BillScreen> {
     try {
       final resp = await api.getBillDetail(billId);
       if (!mounted || !resp.isSuccess) return;
-      final bill = resp.data?['bill'] as Map<String, dynamic>?;
+      final bill = resp.dataMap?['bill'] as Map<String, dynamic>?;
       if (bill == null || !mounted) return;
 
       final payment = (bill['payment'] as num?)?.toDouble() ?? 0;

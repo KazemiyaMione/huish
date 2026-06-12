@@ -40,10 +40,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ]);
       if (!mounted) return;
       if (results[0].isSuccess) {
-        _accountData = results[0].data?['account'] as Map<String, dynamic>?;
+        _accountData = results[0].dataMap?['account'] as Map<String, dynamic>?;
       }
       if (results[1].isSuccess) {
-        _scoreInfo = results[1].data?['accScoreRsp'] as Map<String, dynamic>?;
+        _scoreInfo = results[1].dataMap?['accScoreRsp'] as Map<String, dynamic>?;
       }
     } catch (_) {}
     if (mounted) {
@@ -93,7 +93,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SnackBar(content: Text('设备已在列表中或已绑定'), backgroundColor: Colors.orange),
         );
       } else {
-        final msg = resp.data?['msg'] as String? ?? '绑定失败';
+        final msg = resp.dataMap?['msg'] as String? ?? '绑定失败';
         messenger.showSnackBar(
           SnackBar(content: Text('$msg (code: ${resp.code})')),
         );
