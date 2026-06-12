@@ -46,14 +46,15 @@ jobs:
 
       - name: Rename artifacts
         run: |
-          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d+ -f1)
-          cp build/app/outputs/flutter-apk/app-release.apk "cloudora-v${VERSION}.apk"
-          cp build/app/outputs/bundle/release/app-release.aab "cloudora-v${VERSION}.aab"
+          TAG=${GITHUB_REF#refs/tags/}
+          TAG=${TAG#v}
+          cp build/app/outputs/flutter-apk/app-release.apk "cloudora-v${TAG}.apk"
+          cp build/app/outputs/bundle/release/app-release.aab "cloudora-v${TAG}.aab"
 
       - name: Extract changelog
         run: |
-          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d+ -f1)
-          sed -n "/^## v${VERSION}/,/^## v/p" CHANGELOG.md | sed '$d' > .release-body.md
+          TAG=${GITHUB_REF#refs/tags/}
+          sed -n "/^## $TAG/,/^## v/p" CHANGELOG.md | sed '$d' > .release-body.md
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -77,6 +78,6 @@ jobs:
             cloudora-v*.apk
             cloudora-v*.aab
           body_path: .release-body.md
-          generate_release_notes: true
+          generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

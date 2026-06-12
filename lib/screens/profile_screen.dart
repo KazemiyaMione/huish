@@ -353,7 +353,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             Text('关于', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            _buildAboutRow(context, Icons.info_outline, '版本', '1.2.0'),
+            _buildAboutRow(context, Icons.info_outline, '版本', '1.3.0'),
             const SizedBox(height: 12),
             _buildAboutRow(context, Icons.water_drop_outlined, '应用名称', '云水 · 直饮水'),
             const SizedBox(height: 12),
