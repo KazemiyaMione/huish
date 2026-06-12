@@ -5,6 +5,7 @@ import '../providers/settings_provider.dart';
 import 'score_screen.dart';
 import 'bill_screen.dart';
 import 'device_settings_screen.dart';
+import 'add_device_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -49,62 +50,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (_) {}
     if (mounted) {
       setState(() => _loadingAccount = false);
-    }
-  }
-
-  Future<void> _showAddDeviceDialog(BuildContext context) async {
-    final api = context.read<AuthProvider>().api;
-    final messenger = ScaffoldMessenger.of(context);
-    final ctrl = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('添加设备'),
-        content: TextField(
-          controller: ctrl,
-          keyboardType: TextInputType.number,
-          autofocus: true,
-          decoration: const InputDecoration(
-            labelText: '设备码',
-            hintText: '请输入设备码',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('绑定'),
-          ),
-        ],
-      ),
-    );
-    if (ok != true || !mounted) return;
-    final did = ctrl.text.trim();
-    if (did.isEmpty) return;
-    try {
-      final resp = await api.getDeviceQr(did);
-      if (!mounted) return;
-      if (resp.isSuccess) {
-        messenger.showSnackBar(
-          const SnackBar(content: Text('设备添加成功'), backgroundColor: Colors.green),
-        );
-      } else if (resp.code == 400 || resp.code == 409) {
-        messenger.showSnackBar(
-          const SnackBar(content: Text('设备已在列表中或已绑定'), backgroundColor: Colors.orange),
-        );
-      } else {
-        final msg = resp.dataMap?['msg'] as String? ?? '绑定失败';
-        messenger.showSnackBar(
-          SnackBar(content: Text('$msg (code: ${resp.code})')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        messenger.showSnackBar(
-          const SnackBar(content: Text('网络异常，请重试')),
-        );
-      }
     }
   }
 
@@ -225,9 +170,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ListTile(
             leading: const Icon(Icons.add_circle_outline, color: Colors.blue),
             title: const Text('添加设备'),
-            subtitle: const Text('输入设备码绑定饮水机'),
+            subtitle: const Text('扫码或输入设备码绑定饮水机'),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => _showAddDeviceDialog(context),
+            onTap: () async {
+              final added = await Navigator.of(context).push<bool>(
+                MaterialPageRoute(builder: (_) => const AddDeviceScreen()),
+              );
+              if (added == true && mounted) _loadAccount();
+            },
           ),
           const Divider(height: 1),
           ListTile(
