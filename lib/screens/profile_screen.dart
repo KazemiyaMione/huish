@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/settings_provider.dart';
+import 'score_screen.dart';
+import 'bill_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -201,6 +203,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const Divider(height: 1),
           ListTile(
+            leading: const Icon(Icons.stars, color: Colors.orange),
+            title: const Text('积分中心'),
+            subtitle: const Text('赚积分、查看积分明细'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ScoreScreen()),
+            ),
+          ),
+          const Divider(height: 1),
+          ListTile(
+            leading: const Icon(Icons.receipt_long, color: Colors.teal),
+            title: const Text('消费记录'),
+            subtitle: const Text('查看饮水消费账单'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const BillScreen()),
+            ),
+          ),
+          const Divider(height: 1),
+          ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
             title: const Text('退出登录'),
             subtitle: const Text('清除登录信息并返回登录页'),
@@ -258,7 +280,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             Text('关于', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            _buildAboutRow(context, Icons.info_outline, '版本', '1.1.3'),
+            _buildAboutRow(context, Icons.info_outline, '版本', '1.2.0'),
             const SizedBox(height: 12),
             _buildAboutRow(context, Icons.water_drop_outlined, '应用名称', '云水 · 直饮水'),
             const SizedBox(height: 12),
