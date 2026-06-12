@@ -174,7 +174,7 @@ class _BillScreenState extends State<BillScreen> {
               : '';
           final type = b['type'] as int? ?? 0;
           final status = b['status'] as int? ?? 0;
-          final devName = (b['dev'] as Map<String, dynamic>?)?['name'] as String? ?? '';
+          final msg = b['msg'] as String? ?? '饮水消费';
 
           final bid = b['id'] as String? ?? '';
           return Card(
@@ -187,7 +187,7 @@ class _BillScreenState extends State<BillScreen> {
               title: Text('${_billTypeLabel(type)} ¥${payment.toStringAsFixed(2)}',
                   style: const TextStyle(fontWeight: FontWeight.w600)),
               subtitle: Text(
-                [timeStr, devName].where((s) => s.isNotEmpty).join(' · '),
+                '$msg\n$timeStr',
                 style: const TextStyle(color: Colors.grey, fontSize: 12),
               ),
               trailing: Container(
