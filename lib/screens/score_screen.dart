@@ -18,6 +18,7 @@ class _ScoreScreenState extends State<ScoreScreen> with SingleTickerProviderStat
   String? _error;
   final Set<String> _claimingTasks = {};
   bool _autoClaiming = false;
+  int? _srcFilter; // null=全部, 101=收入, 105=支出
 
   @override
   void initState() {
@@ -41,7 +42,7 @@ class _ScoreScreenState extends State<ScoreScreen> with SingleTickerProviderStat
     try {
       final results = await Future.wait([
         api.getMissionList(),
-        api.getScoreList(),
+        api.getScoreList(src: _srcFilter),
       ]);
       if (!mounted) return;
       setState(() {
@@ -306,48 +307,90 @@ class _ScoreScreenState extends State<ScoreScreen> with SingleTickerProviderStat
   Widget _buildHistoryTab() {
     final items = _scoreHistory ?? [];
 
-    if (items.isEmpty) {
-      return ListView(
-        children: const [
-          SizedBox(height: 80),
-          Center(child: Text('暂无积分记录', style: TextStyle(color: Colors.grey, fontSize: 16))),
-        ],
-      );
-    }
+    return Column(
+      children: [
+        _buildSrcFilterBar(),
+        Expanded(
+          child: items.isEmpty
+              ? ListView(
+                  children: const [
+                    SizedBox(height: 80),
+                    Center(child: Text('暂无积分记录', style: TextStyle(color: Colors.grey, fontSize: 16))),
+                  ],
+                )
+              : RefreshIndicator(
+                  onRefresh: _loadData,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: items.length,
+                    itemBuilder: (_, i) {
+                      final item = items[i] as Map<String, dynamic>;
+                      final data = item['data'] as Map<String, dynamic>?;
+                      final src = item['src'] as int? ?? 0;
+                      final isIncome = src != 105; // 101=收入, 105=支出
+                      final scoreStr = data?['score'] as String? ?? '0';
+                      final score = int.tryParse(scoreStr) ?? 0;
+                      final adName = data?['adName'] as String?;
+                      final msg = item['msg'] as String? ?? '';
+                      final title = adName ?? msg;
+                      final ctime = item['ctime'] as int?;
+                      final timeStr = ctime != null
+                          ? DateTime.fromMillisecondsSinceEpoch(ctime).toString().substring(0, 16)
+                          : '';
 
-    return RefreshIndicator(
-      onRefresh: _loadData,
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: items.length,
-        itemBuilder: (_, i) {
-          final item = items[i] as Map<String, dynamic>;
-          final title = item['name'] as String? ?? item['msg'] as String? ?? '积分变动';
-          final score = item['score'] as num? ?? 0;
-          final ctime = item['ctime'] as int?;
-          final timeStr = ctime != null
-              ? DateTime.fromMillisecondsSinceEpoch(ctime).toString().substring(0, 16)
-              : '';
-
-          return Card(
-            margin: const EdgeInsets.only(bottom: 8),
-            child: ListTile(
-              leading: Icon(
-                score > 0 ? Icons.add_circle_outline : Icons.remove_circle_outline,
-                color: score > 0 ? Colors.green : Colors.red,
-              ),
-              title: Text(title),
-              subtitle: Text(timeStr, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-              trailing: Text(
-                '${score > 0 ? '+' : ''}$score',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: score > 0 ? Colors.green : Colors.red,
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        child: ListTile(
+                          leading: Icon(
+                            isIncome ? Icons.add_circle_outline : Icons.remove_circle_outline,
+                            color: isIncome ? Colors.green : Colors.red,
+                          ),
+                          title: Text(title),
+                          subtitle: Text(timeStr, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                          trailing: Text(
+                            '${isIncome ? '+' : '-'}$score',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isIncome ? Colors.green : Colors.red,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
-              ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSrcFilterBar() {
+    const filters = <int?, String>{
+      null: '全部',
+      101: '收入',
+      105: '支出',
+    };
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        children: filters.entries.map((e) {
+          final selected = _srcFilter == e.key;
+          final color = e.key == null ? null : (e.key == 101 ? Colors.green : Colors.red);
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilterChip(
+              label: Text(e.value),
+              selected: selected,
+              onSelected: (_) {
+                setState(() => _srcFilter = e.key);
+                _loadData();
+              },
+              selectedColor: color?.withAlpha(40),
+              checkmarkColor: color,
             ),
           );
-        },
+        }).toList(),
       ),
     );
   }

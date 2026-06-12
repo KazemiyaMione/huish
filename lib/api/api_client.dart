@@ -212,9 +212,10 @@ class ApiClient {
     return ApiResponse.fromJson(jsonDecode(resp.body) as Map<String, dynamic>);
   }
 
-  /// Get score history (points earned/spent).
-  Future<ApiResponse> getScoreList({int page = 1, int size = 20}) async {
-    final resp = await _get('/api/v1/acc/score/score-lst?page=$page&size=$size&hasCount=true&src=0');
+  /// Get score history. [src] null=全部, 101=收入, 105=支出.
+  Future<ApiResponse> getScoreList({int page = 0, int size = 20, int? src}) async {
+    final srcStr = src != null ? '&src=$src' : '';
+    final resp = await _get('/api/v1/acc/score/score-lst?page=$page&size=$size&hasCount=true$srcStr');
     return ApiResponse.fromJson(jsonDecode(resp.body) as Map<String, dynamic>);
   }
 
