@@ -224,6 +224,12 @@ class ApiClient {
     return ApiResponse.fromJson(jsonDecode(resp.body) as Map<String, dynamic>);
   }
 
+  /// Toggle score deduction (积分抵扣) on/off.
+  Future<ApiResponse> setUseScore(bool enable) async {
+    final resp = await _post('/api/v1/acc/upt', data: {'useScore': enable ? 1 : 0});
+    return ApiResponse.fromJson(jsonDecode(resp.body) as Map<String, dynamic>);
+  }
+
   bool get isLoggedIn => _token != null;
   String? get token => _token;
   String? get uid => _uid;

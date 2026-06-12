@@ -252,6 +252,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildSettings(BuildContext context, SettingsProvider settings) {
+    final useScore = (_accountData?['useScore'] as int?) == 1;
+
     return Card(
       child: Column(
         children: [
@@ -265,9 +267,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
             value: settings.isDark,
             onChanged: (_) => settings.toggleTheme(),
           ),
+          const Divider(height: 1),
+          SwitchListTile(
+            secondary: Icon(
+              useScore ? Icons.savings : Icons.savings_outlined,
+              color: useScore ? Colors.orange : Colors.grey,
+            ),
+            title: const Text('积分抵扣'),
+            subtitle: Text(useScore ? '已开启，消费时自动使用积分抵扣' : '已关闭'),
+            value: useScore,
+            onChanged: (_) => _toggleUseScore(),
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _toggleUseScore() async {
+    final current = (_accountData?['useScore'] as int?) == 1;
+    final api = context.read<AuthProvider>().api;
+    try {
+      final resp = await api.setUseScore(!current);
+      if (!mounted) return;
+      if (resp.isSuccess) {
+        setState(() {
+          _accountData = {
+            ...?_accountData,
+            'useScore': current ? 0 : 1,
+          };
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(current ? '积分抵扣已关闭' : '积分抵扣已开启'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('设置失败 (code: ${resp.code})')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('网络异常，请重试')),
+        );
+      }
+    }
   }
 
   Widget _buildAbout(BuildContext context) {
