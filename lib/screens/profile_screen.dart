@@ -14,6 +14,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic>? _accountData;
+  Map<String, dynamic>? _scoreInfo;
   bool _loadingAccount = true;
 
   @override
@@ -24,6 +25,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadAccount() async {
     final api = context.read<AuthProvider>().api;
+    // Load cached master instantly
     final cached = await api.loadCachedMaster();
     if (cached != null && mounted) {
       setState(() {
@@ -32,12 +34,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
     }
     try {
-      final resp = await api.getMaster();
-      if (resp.isSuccess && mounted) {
-        setState(() {
-          _accountData = resp.data?['account'] as Map<String, dynamic>?;
-          _loadingAccount = false;
-        });
+      final results = await Future.wait([
+        api.getMaster(),
+        api.getMissionList(),
+      ]);
+      if (!mounted) return;
+      if (results[0].isSuccess) {
+        _accountData = results[0].data?['account'] as Map<String, dynamic>?;
+      }
+      if (results[1].isSuccess) {
+        _scoreInfo = results[1].data?['accScoreRsp'] as Map<String, dynamic>?;
       }
     } catch (_) {}
     if (mounted) {
@@ -141,7 +147,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final account = _accountData;
     final name = account?['name'] as String? ?? '未登录';
     final pn = account?['pn'] as String? ?? '';
-    final useScore = account?['useScore'] as num? ?? 0;
+    final score = _scoreInfo?['score'] as String? ?? '0';
+    final totalScore = _scoreInfo?['totalScore'] as String? ?? '0';
 
     return Card(
       child: Padding(
@@ -177,16 +184,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const Text('积分', style: TextStyle(color: Colors.grey, fontSize: 12)),
                     const SizedBox(height: 2),
                     Text(
-                      '$useScore',
+                      score,
                       style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blue),
                     ),
                   ],
                 ),
               ],
             ),
+            if (totalScore != '0') ...[
+              const Divider(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildStat('可用积分', score),
+                  _buildStat('累计获得', totalScore),
+                ],
+              ),
+            ],
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildStat(String label, String value) {
+    return Column(
+      children: [
+        Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 2),
+        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+      ],
     );
   }
 

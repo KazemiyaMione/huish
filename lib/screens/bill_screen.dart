@@ -50,6 +50,68 @@ class _BillScreenState extends State<BillScreen> {
     }
   }
 
+  Future<void> _showBillDetail(String billId) async {
+    final api = context.read<AuthProvider>().api;
+    try {
+      final resp = await api.getBillDetail(billId);
+      if (!mounted || !resp.isSuccess) return;
+      final bill = resp.data?['bill'] as Map<String, dynamic>?;
+      if (bill == null || !mounted) return;
+
+      final payment = (bill['payment'] as num?)?.toDouble() ?? 0;
+      final ctime = bill['ctime'] as int?;
+      final timeStr = ctime != null
+          ? DateTime.fromMillisecondsSinceEpoch(ctime).toString().substring(0, 19)
+          : '';
+      final type = bill['type'] as int? ?? 0;
+      final status = bill['status'] as int? ?? 0;
+      final msg = bill['msg'] as String? ?? '';
+      final dev = bill['dev'] as Map<String, dynamic>?;
+      final devName = dev?['name'] as String? ?? '';
+      final payee = bill['payee'] as String? ?? '';
+      final discount = (bill['discount'] as num?)?.toDouble() ?? 0;
+      final tag = bill['tag'] as String? ?? '';
+
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('账单详情'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _detailRow('金额', '¥${payment.toStringAsFixed(2)}'),
+              _detailRow('类型', _billTypeLabel(type)),
+              if (discount > 0) _detailRow('折扣', '¥${discount.toStringAsFixed(2)}'),
+              if (msg.isNotEmpty) _detailRow('描述', msg),
+              if (devName.isNotEmpty) _detailRow('设备', devName),
+              if (payee.isNotEmpty) _detailRow('收款方', payee),
+              if (tag.isNotEmpty) _detailRow('交易号', tag),
+              _detailRow('时间', timeStr),
+              _detailRow('状态', status == 3 ? '已完成' : '进行中'),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('关闭')),
+          ],
+        ),
+      );
+    } catch (_) {}
+  }
+
+  Widget _detailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(width: 60, child: Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13))),
+          Expanded(child: Text(value, style: const TextStyle(fontSize: 13))),
+        ],
+      ),
+    );
+  }
+
   String _billTypeLabel(int type) {
     return switch (type) {
       21 => '按量消费',
@@ -114,6 +176,7 @@ class _BillScreenState extends State<BillScreen> {
           final status = b['status'] as int? ?? 0;
           final devName = (b['dev'] as Map<String, dynamic>?)?['name'] as String? ?? '';
 
+          final bid = b['id'] as String? ?? '';
           return Card(
             margin: const EdgeInsets.only(bottom: 8),
             child: ListTile(
@@ -141,6 +204,7 @@ class _BillScreenState extends State<BillScreen> {
                   ),
                 ),
               ),
+              onTap: () => _showBillDetail(bid),
             ),
           );
         },

@@ -103,6 +103,45 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _unfavoriteDevice(String id, String name) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('移除设备'),
+        content: Text('确定从列表中移除「$name」吗？'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('移除', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    try {
+      final resp = await context.read<AuthProvider>().api.favoriteDevice(id, remove: true);
+      if (!mounted) return;
+      if (resp.isSuccess) {
+        _runningDeviceIds.remove(id);
+        _loadMaster();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('设备已移除'), backgroundColor: Colors.green),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('移除失败 (code: ${resp.code})')),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('网络异常，请重试')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -220,6 +259,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         subtitle: Text('$city · $detail', style: const TextStyle(color: Colors.grey, fontSize: 12)),
         onTap: () => _openDevice(id, name),
+        onLongPress: () => _unfavoriteDevice(id, name),
       ),
     );
   }

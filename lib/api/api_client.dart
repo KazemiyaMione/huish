@@ -230,6 +230,34 @@ class ApiClient {
     return ApiResponse.fromJson(jsonDecode(resp.body) as Map<String, dynamic>);
   }
 
+  /// Get bill full detail.
+  Future<ApiResponse> getBillDetail(String billId) async {
+    final resp = await _get('/api/v1/bill/view-full?id=$billId');
+    return ApiResponse.fromJson(jsonDecode(resp.body) as Map<String, dynamic>);
+  }
+
+  /// Favorite or unfavorite a device. [remove] 0=favorite, non-0=unfavorite.
+  Future<ApiResponse> favoriteDevice(String deviceId, {bool remove = false}) async {
+    final resp = await _get('/api/v1/dev/favo?did=$deviceId&remove=${remove ? 1 : 0}');
+    return ApiResponse.fromJson(jsonDecode(resp.body) as Map<String, dynamic>);
+  }
+
+  /// Find nearby devices.
+  Future<ApiResponse> getNearbyDevices({
+    required String eid,
+    int dtype = 8,
+    double? lng,
+    double? lat,
+    int size = 20,
+  }) async {
+    final lngStr = lng?.toString() ?? '';
+    final latStr = lat?.toString() ?? '';
+    final resp = await _get(
+      '/api/v1/dev/near?eid=$eid&dtype=$dtype&lng=$lngStr&lat=$latStr&size=$size',
+    );
+    return ApiResponse.fromJson(jsonDecode(resp.body) as Map<String, dynamic>);
+  }
+
   bool get isLoggedIn => _token != null;
   String? get token => _token;
   String? get uid => _uid;
