@@ -35,6 +35,21 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Setup signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > android/cloudora-release.jks
+          cat > android/key.properties << PROPERTIES
+          storePassword=$KEYSTORE_PASSWORD
+          keyPassword=$KEY_PASSWORD
+          keyAlias=$KEY_ALIAS
+          storeFile=../cloudora-release.jks
+          PROPERTIES
+
       - name: Static analysis
         run: flutter analyze
 

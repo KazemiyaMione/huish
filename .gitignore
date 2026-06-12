@@ -13,3 +13,11 @@ Thumbs.db
 
 # Local config
 .claude/settings.local.json
+
+# Android signing
+android/key.properties
+android/*.jks
+
+# Reverse engineering docs
+API_FULL_REFERENCE.md
+request*.txt
