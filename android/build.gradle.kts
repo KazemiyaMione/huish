@@ -14,13 +14,12 @@ buildscript {
 
 allprojects {
     repositories {
-        // 国内镜像源（加速依赖下载）
-        maven { url = uri("https://maven.aliyun.com/repository/google") }
-        maven { url = uri("https://maven.aliyun.com/repository/public") }
-        // Flutter专用镜像
-        maven { url = uri("https://storage.flutter-io.cn/download.flutter.io") }
         google()
         mavenCentral()
+        // 国内镜像源（加速依赖下载，fallback）
+        maven { url = uri("https://maven.aliyun.com/repository/google") }
+        maven { url = uri("https://maven.aliyun.com/repository/public") }
+        maven { url = uri("https://storage.flutter-io.cn/download.flutter.io") }
     }
 }
 
