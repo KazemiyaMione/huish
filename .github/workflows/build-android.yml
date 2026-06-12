@@ -42,7 +42,7 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          echo "$KEYSTORE_BASE64" | base64 -d > android/cloudora-release.jks
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > android/cloudora-release.jks
           cat > android/key.properties << PROPERTIES
           storePassword=$KEYSTORE_PASSWORD
           keyPassword=$KEY_PASSWORD
