@@ -13,6 +13,16 @@ class _BillScreenState extends State<BillScreen> {
   List<dynamic>? _bills;
   bool _loading = true;
   String? _error;
+  int? _statusFilter; // null=全部, 1=未付款, 2=待确认, 3=已付款, 4=付款失败, 9=已取消
+
+  static const _statusFilters = <int?, _FilterInfo>{
+    null: _FilterInfo('全部', null),
+    1: _FilterInfo('未付款', Colors.orange),
+    2: _FilterInfo('待确认', Colors.blue),
+    3: _FilterInfo('已付款', Colors.green),
+    4: _FilterInfo('失败', Colors.red),
+    9: _FilterInfo('已取消', Colors.grey),
+  };
 
   @override
   void initState() {
@@ -27,7 +37,7 @@ class _BillScreenState extends State<BillScreen> {
       _error = null;
     });
     try {
-      final resp = await api.getBillList();
+      final resp = await api.getBillList(status: _statusFilter);
       if (!mounted) return;
       if (resp.isSuccess) {
         setState(() {
@@ -88,7 +98,7 @@ class _BillScreenState extends State<BillScreen> {
               if (payee.isNotEmpty) _detailRow('收款方', payee),
               if (tag.isNotEmpty) _detailRow('交易号', tag),
               _detailRow('时间', timeStr),
-              _detailRow('状态', status == 3 ? '已完成' : '进行中'),
+              _detailRow('状态', _statusLabel(status)),
             ],
           ),
           actions: [
@@ -120,6 +130,17 @@ class _BillScreenState extends State<BillScreen> {
     };
   }
 
+  String _statusLabel(int status) {
+    return switch (status) {
+      1 => '未付款',
+      2 => '待确认',
+      3 => '已付款',
+      4 => '付款失败',
+      9 => '已取消',
+      _ => '未知',
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -129,7 +150,37 @@ class _BillScreenState extends State<BillScreen> {
         title: const Text('消费记录'),
         backgroundColor: theme.colorScheme.inversePrimary,
       ),
-      body: _buildBody(),
+      body: Column(
+        children: [
+          _buildFilterBar(),
+          Expanded(child: _buildBody()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterBar() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        children: _statusFilters.entries.map((e) {
+          final selected = _statusFilter == e.key;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilterChip(
+              label: Text(e.value.label),
+              selected: selected,
+              onSelected: (_) {
+                setState(() => _statusFilter = e.key);
+                _loadBills();
+              },
+              selectedColor: e.value.color?.withValues(alpha: 0.3),
+              checkmarkColor: e.value.color,
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 
@@ -153,9 +204,10 @@ class _BillScreenState extends State<BillScreen> {
 
     if (bills.isEmpty) {
       return ListView(
-        children: const [
-          SizedBox(height: 80),
-          Center(child: Text('暂无消费记录', style: TextStyle(color: Colors.grey, fontSize: 16))),
+        children: [
+          const SizedBox(height: 80),
+          Center(child: Text(_statusFilter != null ? '暂无该状态账单' : '暂无消费记录',
+              style: const TextStyle(color: Colors.grey, fontSize: 16))),
         ],
       );
     }
@@ -193,15 +245,12 @@ class _BillScreenState extends State<BillScreen> {
               trailing: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: status == 3 ? Colors.green[50] : Colors.orange[50],
+                  color: _statusColor(status)?.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  status == 3 ? '已完成' : '进行中',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: status == 3 ? Colors.green : Colors.orange,
-                  ),
+                  _statusLabel(status),
+                  style: TextStyle(fontSize: 11, color: _statusColor(status)),
                 ),
               ),
               onTap: () => _showBillDetail(bid),
@@ -211,4 +260,21 @@ class _BillScreenState extends State<BillScreen> {
       ),
     );
   }
+
+  Color? _statusColor(int status) {
+    return switch (status) {
+      1 => Colors.orange,
+      2 => Colors.blue,
+      3 => Colors.green,
+      4 => Colors.red,
+      9 => Colors.grey,
+      _ => Colors.grey,
+    };
+  }
+}
+
+class _FilterInfo {
+  final String label;
+  final Color? color;
+  const _FilterInfo(this.label, this.color);
 }

@@ -218,9 +218,10 @@ class ApiClient {
     return ApiResponse.fromJson(jsonDecode(resp.body) as Map<String, dynamic>);
   }
 
-  /// Get bill/consumption list.
-  Future<ApiResponse> getBillList({int page = 1, int size = 20}) async {
-    final resp = await _get('/api/v1/bill/lst-owner?page=$page&size=$size&hasCount=true');
+  /// Get bill/consumption list. [status] null=all, 1=unpaid, 2=pending, 3=paid, 4=failed, 9=cancelled.
+  Future<ApiResponse> getBillList({int page = 0, int size = 20, int? status}) async {
+    final statusStr = status != null ? '&status=$status' : '';
+    final resp = await _get('/api/v1/bill/lst-owner?page=$page&size=$size&hasCount=true$statusStr');
     return ApiResponse.fromJson(jsonDecode(resp.body) as Map<String, dynamic>);
   }
 

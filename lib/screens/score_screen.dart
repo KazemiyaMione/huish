@@ -17,6 +17,7 @@ class _ScoreScreenState extends State<ScoreScreen> with SingleTickerProviderStat
   bool _loading = true;
   String? _error;
   final Set<String> _claimingTasks = {};
+  bool _autoClaiming = false;
 
   @override
   void initState() {
@@ -114,6 +115,37 @@ class _ScoreScreenState extends State<ScoreScreen> with SingleTickerProviderStat
     if (mounted) setState(() => _claimingTasks.remove(refId));
   }
 
+  Future<void> _claimAll() async {
+    final missions = (_missionData?['missions'] as List<dynamic>?)
+            ?.cast<Map<String, dynamic>>()
+            .where((m) {
+              final limit = m['limit'] as int? ?? 0;
+              final cnt = m['cnt'] as int? ?? 0;
+              final remaining = limit == -4 ? 999 : (limit - cnt).clamp(0, 999);
+              return remaining > 0;
+            })
+            .toList() ??
+        [];
+
+    if (missions.isEmpty) return;
+
+    setState(() => _autoClaiming = true);
+    int claimed = 0;
+    for (final m in missions) {
+      await _claimScore(m);
+      claimed++;
+      // Small delay between claims to avoid rate limiting
+      if (claimed < missions.length) await Future.delayed(const Duration(seconds: 2));
+    }
+    if (mounted) {
+      setState(() => _autoClaiming = false);
+      _loadData();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('已领取 $claimed 个任务'), backgroundColor: Colors.green),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -188,9 +220,15 @@ class _ScoreScreenState extends State<ScoreScreen> with SingleTickerProviderStat
   Widget _buildMissionTab() {
     final missions = (_missionData?['missions'] as List<dynamic>?)
             ?.cast<Map<String, dynamic>>()
-            .where((m) => (m['mtype'] as int? ?? 0) != 3) // 过滤广告任务
             .toList() ??
         [];
+
+    final claimable = missions.any((m) {
+      final limit = m['limit'] as int? ?? 0;
+      final cnt = m['cnt'] as int? ?? 0;
+      final remaining = limit == -4 ? 999 : (limit - cnt).clamp(0, 999);
+      return remaining > 0;
+    });
 
     if (missions.isEmpty) {
       return ListView(
@@ -205,9 +243,30 @@ class _ScoreScreenState extends State<ScoreScreen> with SingleTickerProviderStat
       onRefresh: _loadData,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: missions.length,
+        itemCount: missions.length + (claimable ? 1 : 0),
         itemBuilder: (_, i) {
-          final m = missions[i];
+          if (claimable && i == 0) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _autoClaiming ? null : _claimAll,
+                  icon: _autoClaiming
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.stars),
+                  label: Text(_autoClaiming ? '领取中...' : '一键领取'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            );
+          }
+          final idx = claimable ? i - 1 : i;
+          final m = missions[idx];
           final refId = m['refId'] as String? ?? '';
           final name = m['name'] as String? ?? '未知任务';
           final desc = m['desc'] as String? ?? '';
