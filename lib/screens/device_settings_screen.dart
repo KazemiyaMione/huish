@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import 'nearby_devices_screen.dart';
 
 class DeviceSettingsScreen extends StatefulWidget {
   const DeviceSettingsScreen({super.key});
@@ -97,6 +98,15 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
       appBar: AppBar(
         title: const Text('设备管理'),
         backgroundColor: theme.colorScheme.inversePrimary,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.location_on_outlined),
+            tooltip: '附近设备',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const NearbyDevicesScreen()),
+            ),
+          ),
+        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())

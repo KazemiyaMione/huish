@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import 'device_screen.dart';
+import 'nearby_devices_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -209,8 +210,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 12),
                     const Text('暂无设备', style: TextStyle(color: Colors.grey, fontSize: 16)),
                     const SizedBox(height: 4),
-                    const Text('前往「我的」页面输入设备码添加', style: TextStyle(color: Colors.grey, fontSize: 13)),
-                    const SizedBox(height: 16),
+                    const Text('前往「我的」添加设备或查看附近', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const NearbyDevicesScreen()),
+                      ),
+                      icon: const Icon(Icons.location_on),
+                      label: const Text('查看附近设备'),
+                    ),
+                    const SizedBox(height: 8),
                     OutlinedButton.icon(
                       onPressed: _loadMaster,
                       icon: const Icon(Icons.refresh),
