@@ -10,6 +10,8 @@ class NearbyDevicesScreen extends StatefulWidget {
 }
 
 class _NearbyDevicesScreenState extends State<NearbyDevicesScreen> {
+  final _lngCtrl = TextEditingController();
+  final _latCtrl = TextEditingController();
   List<dynamic>? _devices;
   bool _loading = true;
   String? _error;
@@ -18,6 +20,32 @@ class _NearbyDevicesScreenState extends State<NearbyDevicesScreen> {
   @override
   void initState() {
     super.initState();
+    _initCoords();
+  }
+
+  @override
+  void dispose() {
+    _lngCtrl.dispose();
+    _latCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _initCoords() async {
+    final api = context.read<AuthProvider>().api;
+    final cached = await api.loadCachedMaster();
+    if (cached != null) {
+      final favos = cached['favos'] as List<dynamic>?;
+      if (favos != null && favos.isNotEmpty) {
+        final first = favos.first as Map<String, dynamic>?;
+        final addr = first?['addr'] as Map<String, dynamic>?;
+        final lng = addr?['lng'];
+        final lat = addr?['lat'];
+        if (lng != null && lat != null) {
+          _lngCtrl.text = lng.toString();
+          _latCtrl.text = lat.toString();
+        }
+      }
+    }
     _loadNearby();
   }
 
@@ -35,8 +63,12 @@ class _NearbyDevicesScreenState extends State<NearbyDevicesScreen> {
       _loading = true;
       _error = null;
     });
+
+    final lng = double.tryParse(_lngCtrl.text);
+    final lat = double.tryParse(_latCtrl.text);
+
     try {
-      final resp = await api.getNearbyDevices(eid: eid, dtype: 8);
+      final resp = await api.getNearbyDevices(eid: eid, dtype: 8, lng: lng, lat: lat);
       if (!mounted) return;
       if (resp.isSuccess) {
         setState(() {
@@ -93,7 +125,55 @@ class _NearbyDevicesScreenState extends State<NearbyDevicesScreen> {
         title: const Text('附近设备'),
         backgroundColor: theme.colorScheme.inversePrimary,
       ),
-      body: _buildBody(),
+      body: Column(
+        children: [
+          _buildCoordBar(),
+          Expanded(child: _buildBody()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCoordBar() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withAlpha(80),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _lngCtrl,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(
+                labelText: '经度',
+                hintText: 'lng',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              controller: _latCtrl,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(
+                labelText: '纬度',
+                hintText: 'lat',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton.filled(
+            onPressed: _loadNearby,
+            icon: const Icon(Icons.search),
+          ),
+        ],
+      ),
     );
   }
 

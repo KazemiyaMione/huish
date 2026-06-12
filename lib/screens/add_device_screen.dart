@@ -86,7 +86,6 @@ class _AddDeviceScreenState extends State<AddDeviceScreen> with SingleTickerProv
           _resultData = resp.dataMap;
           _loading = false;
           _scanning = false;
-          _favorited = true; // getDeviceQr auto-favorites
         });
       } else if (resp.code == 400 || resp.code == 409) {
         setState(() {
