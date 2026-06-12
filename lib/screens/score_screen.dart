@@ -95,7 +95,6 @@ class _ScoreScreenState extends State<ScoreScreen> with SingleTickerProviderStat
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('领取成功 +$score 积分'), backgroundColor: Colors.green),
         );
-        _loadData();
       } else if (resp.code == -98) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('操作过快，请稍后再试'), backgroundColor: Colors.orange),
@@ -290,7 +289,10 @@ class _ScoreScreenState extends State<ScoreScreen> with SingleTickerProviderStat
                   ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
                   : remaining > 0
                       ? TextButton(
-                          onPressed: () => _claimScore(m),
+                          onPressed: () async {
+                            await _claimScore(m);
+                            _loadData();
+                          },
                           child: const Text('领取'),
                         )
                       : const Text('已领完', style: TextStyle(color: Colors.grey, fontSize: 12)),

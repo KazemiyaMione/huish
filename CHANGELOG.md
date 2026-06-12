@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.4.0 — 2026-06-12
+
+### Added
+- 设备管理页面：状态查询、开机/关机指令、收藏管理
+- sendDeviceCommand / setDeviceUseWay API 接口
+
+### Fixed
+- 一键领取积分不再重复刷新任务列表，状态更准确
+
 ## v1.3.3 — 2026-06-12
 
 ### Fixed

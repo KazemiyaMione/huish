@@ -4,6 +4,7 @@ import '../providers/auth_provider.dart';
 import '../providers/settings_provider.dart';
 import 'score_screen.dart';
 import 'bill_screen.dart';
+import 'device_settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -246,6 +247,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const BillScreen()),
+            ),
+          ),
+          const Divider(height: 1),
+          ListTile(
+            leading: const Icon(Icons.settings, color: Colors.grey),
+            title: const Text('设备管理'),
+            subtitle: const Text('设备状态查询、指令发送、模式选择'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const DeviceSettingsScreen()),
             ),
           ),
           const Divider(height: 1),

@@ -259,6 +259,32 @@ class ApiClient {
     return ApiResponse.fromJson(jsonDecode(resp.body) as Map<String, dynamic>);
   }
 
+  /// Send device command (start/stop/query).
+  /// [mode] 100=PICK_UP_MACHINE, 62=POS_MACHINE.
+  Future<ApiResponse> sendDeviceCommand({
+    required String deviceId,
+    int status = 1,
+    String? uid,
+    int mode = 100,
+  }) async {
+    final resp = await _post('/api/v1/ui/app/dev/command', data: {
+      'id': deviceId,
+      'gene': {
+        'status': status,
+        'uid': uid ?? _uid ?? '',
+        'mode': mode,
+      },
+      'token': _token ?? '',
+    });
+    return ApiResponse.fromJson(jsonDecode(resp.body) as Map<String, dynamic>);
+  }
+
+  /// Set device usage mode.
+  Future<ApiResponse> setDeviceUseWay(dynamic way) async {
+    final resp = await _get('/api/v1/ui/app/dev/dev-use-way?way=$way');
+    return ApiResponse.fromJson(jsonDecode(resp.body) as Map<String, dynamic>);
+  }
+
   bool get isLoggedIn => _token != null;
   String? get token => _token;
   String? get uid => _uid;
