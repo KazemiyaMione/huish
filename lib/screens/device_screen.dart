@@ -279,12 +279,14 @@ class _DeviceScreenState extends State<DeviceScreen> {
     final balance = (wallet?['olCash'] as num?)?.toDouble() ?? 0;
     final thisUse = _currentOut - _startOut;
 
+    final theme = Theme.of(context);
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         Card(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             child: Column(
               children: [
                 AnimatedSwitcher(
@@ -293,7 +295,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
                     _running ? Icons.water_drop : Icons.water_drop_outlined,
                     key: ValueKey(_running),
                     size: 64,
-                    color: _running ? Colors.blue : Colors.grey,
+                    color: _running ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -302,10 +304,8 @@ class _DeviceScreenState extends State<DeviceScreen> {
                   child: Text(
                     _running ? '正在取水中...' : '已停止',
                     key: ValueKey(_running),
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: _running ? Colors.blue : Colors.grey,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      color: _running ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -313,18 +313,18 @@ class _DeviceScreenState extends State<DeviceScreen> {
                   const SizedBox(height: 4),
                   Text(
                     '实时监测中',
-                    style: TextStyle(fontSize: 12, color: Colors.blue.withAlpha(180)),
+                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.primary.withAlpha(180)),
                   ),
                 ],
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _buildStat('累计出水', '${_currentOut.toStringAsFixed(1)} $unit'),
+                    _buildStat(theme, '累计出水', '${_currentOut.toStringAsFixed(1)} $unit'),
                     if (_running && thisUse > 0)
-                      _buildStat('本次接水', '${thisUse.toStringAsFixed(1)} $unit')
+                      _buildStat(theme, '本次接水', '${thisUse.toStringAsFixed(1)} $unit')
                     else
-                      _buildStat('余额', '¥${balance.toStringAsFixed(2)}'),
+                      _buildStat(theme, '余额', '¥${balance.toStringAsFixed(2)}'),
                   ],
                 ),
               ],
@@ -339,10 +339,10 @@ class _DeviceScreenState extends State<DeviceScreen> {
             padding: const EdgeInsets.only(bottom: 16),
             child: Card(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.all(12),
                 child: Row(
                   children: [
-                    const Text('计费方式：', style: TextStyle(fontSize: 14)),
+                    Text('计费方式：', style: theme.textTheme.bodyMedium),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Wrap(
@@ -350,9 +350,8 @@ class _DeviceScreenState extends State<DeviceScreen> {
                         children: _payItems.map((p) {
                           final ptype = p['type'] as int? ?? 0;
                           final selected = _selectedPtype == ptype;
-                          final label = _payTypeLabel(ptype);
                           return ChoiceChip(
-                            label: Text(label),
+                            label: Text(_payTypeLabel(ptype)),
                             selected: selected,
                             onSelected: _running ? null : (_) => setState(() => _selectedPtype = ptype),
                           );
@@ -365,21 +364,13 @@ class _DeviceScreenState extends State<DeviceScreen> {
             ),
           ),
 
-        const SizedBox(height: 8),
-
         SizedBox(
           width: double.infinity,
           height: 56,
-          child: ElevatedButton.icon(
+          child: FilledButton.icon(
             onPressed: _running ? null : _startDevice,
             icon: const Icon(Icons.play_arrow, size: 32),
             label: const Text('开始取水', style: TextStyle(fontSize: 18)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: Colors.grey[300],
-              disabledForegroundColor: Colors.grey[500],
-            ),
           ),
         ),
 
@@ -388,7 +379,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
         SizedBox(
           width: double.infinity,
           height: 56,
-          child: OutlinedButton.icon(
+          child: FilledButton.icon(
             onPressed: _running
                 ? () async {
                     if (await _confirmStop()) _stopDevice();
@@ -396,9 +387,9 @@ class _DeviceScreenState extends State<DeviceScreen> {
                 : null,
             icon: const Icon(Icons.stop, size: 32),
             label: const Text('停止取水', style: TextStyle(fontSize: 18)),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: _running ? Colors.red : Colors.grey,
-              side: BorderSide(color: _running ? Colors.red : Colors.grey, width: _running ? 2 : 1),
+            style: FilledButton.styleFrom(
+              backgroundColor: _running ? theme.colorScheme.error : theme.colorScheme.surfaceContainerHighest,
+              foregroundColor: _running ? theme.colorScheme.onError : theme.colorScheme.onSurface,
             ),
           ),
         ),
@@ -411,12 +402,12 @@ class _DeviceScreenState extends State<DeviceScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('设备信息', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text('设备信息', style: theme.textTheme.titleMedium),
                   const SizedBox(height: 12),
-                  if (detail.isNotEmpty) _buildInfoRow('地址', detail),
-                  if (brand.isNotEmpty) _buildInfoRow('品牌', brand),
-                  if (model.isNotEmpty) _buildInfoRow('型号', model),
-                  _buildInfoRow('设备ID', widget.deviceId),
+                  if (detail.isNotEmpty) _buildInfoRow(theme, '地址', detail),
+                  if (brand.isNotEmpty) _buildInfoRow(theme, '品牌', brand),
+                  if (model.isNotEmpty) _buildInfoRow(theme, '型号', model),
+                  _buildInfoRow(theme, '设备ID', widget.deviceId),
                 ],
               ),
             ),
@@ -434,23 +425,23 @@ class _DeviceScreenState extends State<DeviceScreen> {
     };
   }
 
-  Widget _buildStat(String label, String value) {
+  Widget _buildStat(ThemeData theme, String label, String value) {
     return Column(
       children: [
-        Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+        Text(value, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
-        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
+        Text(label, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
       ],
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRow(ThemeData theme, String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 80, child: Text(label, style: const TextStyle(color: Colors.grey))),
+          SizedBox(width: 80, child: Text(label, style: TextStyle(color: theme.colorScheme.onSurfaceVariant))),
           Expanded(child: Text(value)),
         ],
       ),

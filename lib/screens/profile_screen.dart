@@ -99,6 +99,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final account = _accountData;
     final name = account?['name'] as String? ?? '未登录';
     final pn = account?['pn'] as String? ?? '';
+    final avt = account?['avt'] as String?;
     final score = _scoreInfo?['score'] as String? ?? '0';
     final totalScore = _scoreInfo?['totalScore'] as String? ?? '0';
 
@@ -112,7 +113,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 CircleAvatar(
                   radius: 30,
                   backgroundColor: theme.colorScheme.primary,
-                  child: const Icon(Icons.person, size: 32, color: Colors.white),
+                  backgroundImage: avt != null && avt.isNotEmpty ? NetworkImage(avt) : null,
+                  child: avt == null || avt.isEmpty ? const Icon(Icons.person, size: 32, color: Colors.white) : null,
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -354,7 +356,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             Text('关于', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            _buildAboutRow(context, Icons.info_outline, '版本', '1.4.4'),
+            _buildAboutRow(context, Icons.info_outline, '版本', '1.5.0'),
             const SizedBox(height: 12),
             _buildAboutRow(context, Icons.water_drop_outlined, '应用名称', '云水 · 直饮水'),
             const SizedBox(height: 12),

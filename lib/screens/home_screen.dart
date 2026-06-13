@@ -167,14 +167,14 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           if (_error != null)
             Card(
-              color: Colors.orange[50],
+              color: Theme.of(context).colorScheme.errorContainer,
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Row(
                   children: [
-                    Icon(Icons.warning_amber, color: Colors.orange[700]),
+                    Icon(Icons.warning_amber, color: Theme.of(context).colorScheme.error),
                     const SizedBox(width: 12),
-                    Expanded(child: Text(_error!, style: TextStyle(color: Colors.orange[800]))),
+                    Expanded(child: Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.onErrorContainer))),
                     TextButton(onPressed: _loadMaster, child: const Text('重试')),
                   ],
                 ),
@@ -183,17 +183,17 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 16),
           Row(
             children: [
-              const Expanded(child: Text('我的设备', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+              Expanded(child: Text('我的设备', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold))),
               if (_runningDeviceIds.isNotEmpty)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: Colors.blue[50],
+                    color: Theme.of(context).colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     '${_runningDeviceIds.length}台运行中',
-                    style: TextStyle(fontSize: 12, color: Colors.blue[700]),
+                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onPrimaryContainer),
                   ),
                 ),
             ],
@@ -236,6 +236,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildDeviceCard(Map<String, dynamic> favo) {
+    final theme = Theme.of(context);
     final id = favo['id'] as String? ?? '';
     final name = favo['name'] as String? ?? '未知设备';
     final addr = favo['addr'] as Map<String, dynamic>?;
@@ -249,7 +250,7 @@ class _HomeScreenState extends State<HomeScreen> {
         leading: Icon(
           running ? Icons.water_drop : Icons.water_drop_outlined,
           size: 40,
-          color: running ? Colors.blue : Colors.grey,
+          color: running ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
         ),
         title: Row(
           children: [
@@ -258,14 +259,14 @@ class _HomeScreenState extends State<HomeScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.blue,
+                  color: theme.colorScheme.primary,
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: const Text('运行中', style: TextStyle(color: Colors.white, fontSize: 10)),
+                child: Text('运行中', style: TextStyle(color: theme.colorScheme.onPrimary, fontSize: 10)),
               ),
           ],
         ),
-        subtitle: Text('$city · $detail', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+        subtitle: Text('$city · $detail', style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 12)),
         onTap: () => _openDevice(id, name),
         onLongPress: () => _unfavoriteDevice(id, name),
       ),

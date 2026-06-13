@@ -18,7 +18,10 @@ class _ScoreScreenState extends State<ScoreScreen> with SingleTickerProviderStat
   String? _error;
   final Set<String> _claimingTasks = {};
   bool _autoClaiming = false;
-  int? _srcFilter; // null=全部, 101=收入, 105=支出
+  int? _srcFilter;
+  double _delaySeconds = 10; // 可自定义间隔秒数
+  int _localTs = 0;
+  int _serverTs = 0;
 
   @override
   void initState() {
@@ -40,13 +43,17 @@ class _ScoreScreenState extends State<ScoreScreen> with SingleTickerProviderStat
       _error = null;
     });
     try {
+      _localTs = DateTime.now().millisecondsSinceEpoch;
       final results = await Future.wait([
         api.getMissionList(),
         api.getScoreList(src: _srcFilter),
       ]);
       if (!mounted) return;
       setState(() {
-        if (results[0].isSuccess) _missionData = results[0].dataMap;
+        if (results[0].isSuccess) {
+          _missionData = results[0].dataMap;
+          _serverTs = results[0].time ?? _localTs;
+        }
         if (results[1].isSuccess) {
           _scoreHistory = results[1].dataList;
         }
@@ -62,67 +69,96 @@ class _ScoreScreenState extends State<ScoreScreen> with SingleTickerProviderStat
     }
   }
 
-  Future<void> _claimScore(Map<String, dynamic> mission) async {
+  /// Get the exhausted refIds from accScoreRsp.limits (server-authoritative).
+  Set<String> _exhaustedRefIds() {
+    final limits = _missionData?['accScoreRsp']?['limits'] as List<dynamic>? ?? [];
+    final exhausted = <String>{};
+    for (final l in limits) {
+      final m = l as Map<String, dynamic>;
+      final refId = m['refId'] as String?;
+      final limitVal = m['limit'] as int? ?? 0;
+      if (refId != null && limitVal <= 0) exhausted.add(refId);
+    }
+    return exhausted;
+  }
+
+  int _remainingFromLimits(String refId) {
+    final limits = _missionData?['accScoreRsp']?['limits'] as List<dynamic>? ?? [];
+    for (final l in limits) {
+      final m = l as Map<String, dynamic>;
+      if (m['refId'] == refId) {
+        return m['limit'] as int? ?? 0;
+      }
+    }
+    // Not in limits list yet — check mission's own limit/cnt
+    return 999; // fallback
+  }
+
+  Future<bool> _claimScore(Map<String, dynamic> mission, {bool silent = false}) async {
     final refId = mission['refId'] as String?;
     final score = mission['score'] as int?;
-    if (refId == null || score == null) return;
+    if (refId == null || score == null || score <= 0) return false;
 
     final api = context.read<AuthProvider>().api;
     final token = api.token;
     final uid = api.uid;
-    if (token == null || uid == null) return;
+    if (token == null || uid == null) return false;
 
-    setState(() => _claimingTasks.add(refId));
+    if (!silent) setState(() => _claimingTasks.add(refId));
 
-    // Record local time before the request
-    final localTs = DateTime.now().millisecondsSinceEpoch;
-    // Fetch mission list to get server time for sign
     try {
-      final mlResp = await api.getMissionList();
-      if (!mounted) return;
-      final serverTs = mlResp.time ?? localTs;
+      // Retry up to 3 times for -98 rate limiting
+      for (int attempt = 0; attempt < 3; attempt++) {
+        final sign = SignUtils.generateScoreSign(
+          adId: refId,
+          token: token,
+          uid: uid,
+          localTs: _localTs,
+          serverTs: _serverTs,
+        );
 
-      final sign = SignUtils.generateScoreSign(
-        adId: refId,
-        token: token,
-        uid: uid,
-        localTs: localTs,
-        serverTs: serverTs,
-      );
+        final resp = await api.sendScore(adId: refId, score: score, sign: sign);
+        if (!mounted) return false;
 
-      final resp = await api.sendScore(adId: refId, score: score, sign: sign);
-      if (!mounted) return;
-      if (resp.isSuccess) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('领取成功 +$score 积分'), backgroundColor: Colors.green),
-        );
-      } else if (resp.code == -98) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('操作过快，请稍后再试'), backgroundColor: Colors.orange),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(resp.dataMap?['msg'] as String? ?? '领取失败')),
-        );
+        if (resp.isSuccess) {
+          if (!silent) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('领取成功 +$score 积分'), backgroundColor: Colors.green),
+            );
+          }
+          return true;
+        } else if (resp.code == -98 && attempt < 2) {
+          final wait = 8 + attempt * 5; // 8s → 13s → 18s
+          await Future.delayed(Duration(seconds: wait));
+          continue;
+        } else {
+          if (!silent) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(resp.dataMap?['msg'] as String? ?? '领取失败 (${resp.code})')),
+            );
+          }
+          return false;
+        }
       }
     } catch (e) {
-      if (mounted) {
+      if (!silent && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('网络异常，请重试')),
         );
       }
+    } finally {
+      if (!silent && mounted) setState(() => _claimingTasks.remove(refId));
     }
-    if (mounted) setState(() => _claimingTasks.remove(refId));
+    return false;
   }
 
   Future<void> _claimAll() async {
     final missions = (_missionData?['missions'] as List<dynamic>?)
             ?.cast<Map<String, dynamic>>()
             .where((m) {
-              final limit = m['limit'] as int? ?? 0;
-              final cnt = m['cnt'] as int? ?? 0;
-              final remaining = limit == -4 ? 999 : (limit - cnt).clamp(0, 999);
-              return remaining > 0;
+              final refId = m['refId'] as String? ?? '';
+              final score = m['score'] as int? ?? 0;
+              return score > 0 && !_exhaustedRefIds().contains(refId);
             })
             .toList() ??
         [];
@@ -130,18 +166,52 @@ class _ScoreScreenState extends State<ScoreScreen> with SingleTickerProviderStat
     if (missions.isEmpty) return;
 
     setState(() => _autoClaiming = true);
+    final api = context.read<AuthProvider>().api;
+    final messenger = ScaffoldMessenger.of(context);
+
+    // Record score before claiming
+    final beforeScore = _missionData?['accScoreRsp']?['score'] as String? ?? '0';
+
     int claimed = 0;
-    for (final m in missions) {
-      await _claimScore(m);
-      claimed++;
-      // Small delay between claims to avoid rate limiting
-      if (claimed < missions.length) await Future.delayed(const Duration(seconds: 2));
+    for (int i = 0; i < missions.length; i++) {
+      if (!mounted) break;
+      final m = missions[i];
+
+      // Check limits again before each claim (may have been exhausted mid-batch)
+      final refId = m['refId'] as String? ?? '';
+      if (_exhaustedRefIds().contains(refId)) continue;
+
+      final ok = await _claimScore(m, silent: true);
+      if (ok) claimed++;
+
+      // Refresh mission list to get updated limits
+      if (i < missions.length - 1 && claimed > 0) {
+        _localTs = DateTime.now().millisecondsSinceEpoch;
+        final mlResp = await api.getMissionList();
+        if (mlResp.isSuccess && mounted) {
+          _missionData = mlResp.dataMap;
+          _serverTs = mlResp.time ?? _localTs;
+        }
+        // Delay between claims
+        await Future.delayed(Duration(seconds: _delaySeconds.round()));
+      }
     }
+
+    // Verify score change
     if (mounted) {
+      final verifyResp = await api.getMissionList();
+      if (verifyResp.isSuccess) {
+        _missionData = verifyResp.dataMap;
+        _serverTs = verifyResp.time ?? _serverTs;
+      }
+
       setState(() => _autoClaiming = false);
-      _loadData();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('已领取 $claimed 个任务'), backgroundColor: Colors.green),
+      final afterScore = _missionData?['accScoreRsp']?['score'] as String? ?? '0';
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('本次领取 $claimed 个任务，积分 $beforeScore → $afterScore'),
+          backgroundColor: Colors.green,
+        ),
       );
     }
   }
@@ -192,41 +262,52 @@ class _ScoreScreenState extends State<ScoreScreen> with SingleTickerProviderStat
   }
 
   Widget _buildScoreHeader(Map<String, dynamic> info) {
+    final theme = Theme.of(context);
     final score = info['score'] as String? ?? '0';
     final totalScore = info['totalScore'] as String? ?? '0';
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1565C0), Color(0xFF42A5F5)],
-        ),
+        color: theme.colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         children: [
-          const Text('可用积分', style: TextStyle(color: Colors.white70, fontSize: 14)),
-          const SizedBox(height: 4),
-          Text(score, style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold)),
+          Text('可用积分',
+              style: theme.textTheme.labelLarge?.copyWith(color: theme.colorScheme.onPrimaryContainer.withAlpha(180))),
+          const SizedBox(height: 6),
+          Text(score,
+              style: theme.textTheme.displaySmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onPrimaryContainer,
+              )),
           const SizedBox(height: 8),
-          Text('累计获得: $totalScore', style: const TextStyle(color: Colors.white60, fontSize: 13)),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.onPrimaryContainer.withAlpha(20),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text('累计获得: $totalScore',
+                style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onPrimaryContainer)),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildMissionTab() {
+    final exhausted = _exhaustedRefIds();
     final missions = (_missionData?['missions'] as List<dynamic>?)
             ?.cast<Map<String, dynamic>>()
+            .where((m) => (m['score'] as int? ?? 0) > 0) // 跳过无积分任务
             .toList() ??
         [];
 
-    final claimable = missions.any((m) {
-      final limit = m['limit'] as int? ?? 0;
-      final cnt = m['cnt'] as int? ?? 0;
-      final remaining = limit == -4 ? 999 : (limit - cnt).clamp(0, 999);
-      return remaining > 0;
-    });
+    final claimable = missions.any((m) => !exhausted.contains(m['refId'] as String? ?? ''));
 
     if (missions.isEmpty) {
       return ListView(
@@ -241,7 +322,7 @@ class _ScoreScreenState extends State<ScoreScreen> with SingleTickerProviderStat
       onRefresh: _loadData,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: missions.length + (claimable ? 1 : 0),
+        itemCount: missions.length + (claimable ? 2 : 0), // +1 for button, +1 for slider
         itemBuilder: (_, i) {
           if (claimable && i == 0) {
             return Padding(
@@ -263,38 +344,72 @@ class _ScoreScreenState extends State<ScoreScreen> with SingleTickerProviderStat
               ),
             );
           }
-          final idx = claimable ? i - 1 : i;
+          if (claimable && i == 1) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    children: [
+                      const Text('间隔', style: TextStyle(fontSize: 14)),
+                      Expanded(
+                        child: Slider(
+                          value: _delaySeconds,
+                          min: 5,
+                          max: 30,
+                          divisions: 25,
+                          label: '${_delaySeconds.round()}秒',
+                          onChanged: (v) => setState(() => _delaySeconds = v),
+                        ),
+                      ),
+                      Text('${_delaySeconds.round()}秒', style: const TextStyle(fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }
+
+          final idx = claimable ? i - 2 : i;
           final m = missions[idx];
           final refId = m['refId'] as String? ?? '';
           final name = m['name'] as String? ?? '未知任务';
           final desc = m['desc'] as String? ?? '';
           final score = m['score'] as int? ?? 0;
-          final limit = m['limit'] as int? ?? 0;
-          final cnt = m['cnt'] as int? ?? 0;
           final claiming = _claimingTasks.contains(refId);
-          final remaining = limit == -4 ? 999 : (limit - cnt).clamp(0, 999);
+          final isExhausted = exhausted.contains(refId);
+          final remaining = _remainingFromLimits(refId);
 
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
             child: ListTile(
               leading: CircleAvatar(
-                backgroundColor: Colors.orange[50],
-                child: Text('+$score', style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 12)),
+                backgroundColor: isExhausted ? Colors.grey[100] : Colors.orange[50],
+                child: Text('+$score',
+                    style: TextStyle(
+                      color: isExhausted ? Colors.grey : Colors.orange,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    )),
               ),
               title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
-              subtitle: Text('$desc\n剩余 $remaining 次', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+              subtitle: Text(
+                '$desc\n${isExhausted ? "今日已用完" : "可领 $remaining 次"}',
+                style: const TextStyle(color: Colors.grey, fontSize: 12),
+              ),
               isThreeLine: true,
               trailing: claiming
                   ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
-                  : remaining > 0
-                      ? TextButton(
+                  : isExhausted
+                      ? const Text('已领完', style: TextStyle(color: Colors.grey, fontSize: 12))
+                      : TextButton(
                           onPressed: () async {
-                            await _claimScore(m);
-                            _loadData();
+                            final ok = await _claimScore(m);
+                            if (ok) _loadData();
                           },
                           child: const Text('领取'),
-                        )
-                      : const Text('已领完', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                        ),
             ),
           );
         },
@@ -325,7 +440,7 @@ class _ScoreScreenState extends State<ScoreScreen> with SingleTickerProviderStat
                       final item = items[i] as Map<String, dynamic>;
                       final data = item['data'] as Map<String, dynamic>?;
                       final src = item['src'] as int? ?? 0;
-                      final isIncome = src != 105; // 101=收入, 105=支出
+                      final isIncome = src != 105;
                       final scoreStr = data?['score'] as String? ?? '0';
                       final score = int.tryParse(scoreStr) ?? 0;
                       final adName = data?['adName'] as String?;
