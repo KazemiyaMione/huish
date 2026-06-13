@@ -99,7 +99,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final account = _accountData;
     final name = account?['name'] as String? ?? '未登录';
     final pn = account?['pn'] as String? ?? '';
-    final avt = account?['avt'] as String?;
+    final img = account?['img'] as String?; // field is "img" not "avt"
     final score = _scoreInfo?['score'] as String? ?? '0';
     final totalScore = _scoreInfo?['totalScore'] as String? ?? '0';
 
@@ -113,8 +113,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 CircleAvatar(
                   radius: 30,
                   backgroundColor: theme.colorScheme.primary,
-                  backgroundImage: avt != null && avt.isNotEmpty ? NetworkImage(avt) : null,
-                  child: avt == null || avt.isEmpty ? const Icon(Icons.person, size: 32, color: Colors.white) : null,
+                  backgroundImage: img != null && img.isNotEmpty ? NetworkImage(img) : null,
+                  child: img == null || img.isEmpty ? const Icon(Icons.person, size: 32, color: Colors.white) : null,
                 ),
                 const SizedBox(width: 16),
                 Expanded(
