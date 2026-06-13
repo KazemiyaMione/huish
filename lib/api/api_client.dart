@@ -286,6 +286,32 @@ class ApiClient {
     return ApiResponse.fromJson(jsonDecode(resp.body) as Map<String, dynamic>);
   }
 
+  // ── Wallet ─────────────────────────────────────────────
+
+  /// Get wallet owner info for an enterprise.
+  Future<ApiResponse> getWalletOwner(String eid) async {
+    final resp = await _get('/api/v1/acc/wallet/owner?eid=$eid&all=true');
+    return ApiResponse.fromJson(jsonDecode(resp.body) as Map<String, dynamic>);
+  }
+
+  /// Check PGA (Alipay) signing status. code=0=signed, code=-88=unsigned.
+  Future<ApiResponse> checkPga(String eid) async {
+    final resp = await _get('/api/v1/ui/app/pga-check?eid=$eid&isCombine=false');
+    return ApiResponse.fromJson(jsonDecode(resp.body) as Map<String, dynamic>);
+  }
+
+  /// Get available PGA signing channels.
+  Future<ApiResponse> getPgaChannels() async {
+    final resp = await _get('/api/v1/ui/app/acc-pgas');
+    return ApiResponse.fromJson(jsonDecode(resp.body) as Map<String, dynamic>);
+  }
+
+  /// Get PGA sign for a channel type (20=Alipay). Returns full Alipay SDK params.
+  Future<ApiResponse> getPgaSign(int type) async {
+    final resp = await _get('/api/v1/ui/app/sign-pga?type=$type');
+    return ApiResponse.fromJson(jsonDecode(resp.body) as Map<String, dynamic>);
+  }
+
   bool get isLoggedIn => _token != null;
   String? get token => _token;
   String? get uid => _uid;

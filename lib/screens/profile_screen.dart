@@ -6,6 +6,7 @@ import 'score_screen.dart';
 import 'bill_screen.dart';
 import 'device_settings_screen.dart';
 import 'add_device_screen.dart';
+import 'wallet_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -205,6 +206,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const BillScreen()),
+            ),
+          ),
+          const Divider(height: 1),
+          ListTile(
+            leading: const Icon(Icons.account_balance_wallet, color: Colors.amber),
+            title: const Text('钱包'),
+            subtitle: const Text('余额查询、支付宝代扣签约'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const WalletScreen()),
             ),
           ),
           const Divider(height: 1),

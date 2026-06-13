@@ -20,4 +20,5 @@ android/*.jks
 
 # Reverse engineering docs
 API_FULL_REFERENCE.md
+WALLET_ALIPAY_FLUTTER.md
 request*.txt
