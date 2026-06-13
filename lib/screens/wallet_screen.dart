@@ -97,18 +97,32 @@ class _WalletScreenState extends State<WalletScreen> {
       }
 
       final decoded = Uri.decodeComponent(sign);
-      final url = Uri.parse('alipays://platformapi/startapp?$decoded');
-      if (await canLaunchUrl(url)) {
-        await launchUrl(url);
-      } else {
-        // Fallback to web
-        final webUrl = Uri.parse('https://www.alipay.com/');
-        if (await canLaunchUrl(webUrl)) await launchUrl(webUrl);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('未安装支付宝，请先安装支付宝 App')),
-          );
+      // Alipay deeplink: wrap the full SDK param string as orderStr
+      final encoded = Uri.encodeComponent(decoded);
+
+      // Try multiple deeplink formats
+      final urls = [
+        // Primary: startApp with orderStr (agreement signing appId=20000116)
+        Uri.parse('alipays://platformapi/startApp?appId=20000116&orderStr=$encoded'),
+        // Fallback: startapp with direct params
+        Uri.parse('alipays://platformapi/startapp?$decoded'),
+        // Fallback: legacy scheme
+        Uri.parse('alipay://platformapi/startApp?appId=20000116&orderStr=$encoded'),
+      ];
+
+      bool launched = false;
+      for (final url in urls) {
+        if (await canLaunchUrl(url)) {
+          await launchUrl(url);
+          launched = true;
+          break;
         }
+      }
+
+      if (!launched && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('未安装支付宝 App，请先安装')),
+        );
       }
     } catch (_) {
       if (mounted) {
