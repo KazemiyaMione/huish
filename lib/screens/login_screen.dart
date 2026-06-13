@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/disclaimer_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -194,7 +195,8 @@ class _LoginScreenState extends State<LoginScreen> {
             ? () async {
                 final ok = await auth.login(_phoneCtrl.text, _smsCtrl.text);
                 if (ok && mounted) {
-                  Navigator.of(context).pushReplacementNamed('/main');
+                  await DisclaimerDialog.showIfNeeded(context);
+                  if (mounted) Navigator.of(context).pushReplacementNamed('/main');
                 }
               }
             : null,
