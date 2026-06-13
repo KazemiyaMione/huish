@@ -96,18 +96,11 @@ class _WalletScreenState extends State<WalletScreen> {
         return;
       }
 
-      final decoded = Uri.decodeComponent(sign);
-      // Alipay deeplink: wrap the full SDK param string as orderStr
-      final encoded = Uri.encodeComponent(decoded);
-
-      // Try multiple deeplink formats
+      // Don't decode the sign — pass it as-is (URL-encoded) as query string.
+      // The sign already contains method=alipay.user.agreement.page.sign
       final urls = [
-        // Primary: startApp with orderStr (agreement signing appId=20000116)
-        Uri.parse('alipays://platformapi/startApp?appId=20000116&orderStr=$encoded'),
-        // Fallback: startapp with direct params
-        Uri.parse('alipays://platformapi/startapp?$decoded'),
-        // Fallback: legacy scheme
-        Uri.parse('alipay://platformapi/startApp?appId=20000116&orderStr=$encoded'),
+        Uri.parse('alipays://platformapi/startapp?$sign'),
+        Uri.parse('alipay://platformapi/startapp?$sign'),
       ];
 
       bool launched = false;
